@@ -245,7 +245,7 @@ trait ElasticquentTrait
         }
 
         if (!empty($postFilter)) {
-            $params['body']['script_fields'] = $postFilter;
+            $params['body']['post_filter'] = $postFilter;
         }
 
         $result = $instance->getElasticSearchClient()->search($params);
