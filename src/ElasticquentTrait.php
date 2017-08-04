@@ -3,9 +3,9 @@
 namespace Elasticquent;
 
 use Exception;
-use ReflectionMethod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use ReflectionMethod;
 
 /**
  * Elasticquent Trait
@@ -218,11 +218,11 @@ trait ElasticquentTrait
      * @param int   $limit
      * @param int   $offset
      * @param array $sort
-     * @param array $scripts
+     * @param array $postFilter
      *
      * @return ElasticquentResultCollection
      */
-    public static function searchByQuery($query = null, $aggregations = null, $sourceFields = null, $limit = null, $offset = null, $sort = null, $scripts = null)
+    public static function searchByQuery($query = null, $aggregations = null, $sourceFields = null, $limit = null, $offset = null, $sort = null, $postFilter = null)
     {
         $instance = new static;
 
@@ -243,9 +243,9 @@ trait ElasticquentTrait
         if (!empty($sort)) {
             $params['body']['sort'] = $sort;
         }
-        
-        if(!empty($scripts)) {
-            $params['body']['script_fields'] = $scripts;
+
+        if (!empty($postFilter)) {
+            $params['body']['script_fields'] = $postFilter;
         }
 
         $result = $instance->getElasticSearchClient()->search($params);
@@ -375,7 +375,7 @@ trait ElasticquentTrait
     {
         $params = array(
             'index' => $this->getIndexName(),
-            'type' => $this->getTypeName(),
+            'type'  => $this->getTypeName(),
         );
 
         if ($getIdIfPossible && $this->getKey()) {
@@ -462,7 +462,7 @@ trait ElasticquentTrait
         $mapping = $instance->getBasicEsParams();
 
         $params = array(
-            '_source' => array('enabled' => true),
+            '_source'    => array('enabled' => true),
             'properties' => $instance->getMappingProperties(),
         );
 
@@ -542,7 +542,7 @@ trait ElasticquentTrait
         $mappingProperties = $instance->getMappingProperties();
         if (!is_null($mappingProperties)) {
             $index['body']['mappings'][$instance->getTypeName()] = [
-                '_source' => array('enabled' => true),
+                '_source'    => array('enabled' => true),
                 'properties' => $mappingProperties,
             ];
         }
@@ -596,13 +596,13 @@ trait ElasticquentTrait
     public function newFromHitBuilder($hit = array())
     {
         $key_name = $this->getKeyName();
-        
+
         $attributes = $hit['_source'];
 
         if (isset($hit['_id'])) {
             $attributes[$key_name] = is_numeric($hit['_id']) ? intval($hit['_id']) : $hit['_id'];
         }
-        
+
         // Add fields to attributes
         if (isset($hit['fields'])) {
             foreach ($hit['fields'] as $key => $value) {
@@ -670,7 +670,7 @@ trait ElasticquentTrait
     {
         $instance = $model->newInstance([], $exists = true);
 
-        $instance->setRawAttributes((array)$attributes, $sync = true);
+        $instance->setRawAttributes((array) $attributes, $sync = true);
 
         // Load relations recursive
         static::loadRelationsAttributesRecursive($instance);
@@ -695,7 +695,7 @@ trait ElasticquentTrait
         $items = array_map(function ($item) use ($instance, $parentRelation) {
             // Convert all null relations into empty arrays
             $item = $item ?: [];
-            
+
             return static::newFromBuilderRecursive($instance, $item, $parentRelation);
         }, $items);
 
